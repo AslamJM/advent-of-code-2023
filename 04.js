@@ -50,31 +50,88 @@ function puzzle_04_01(lines) {
 
 //puzzle_04_01(lines);
 
-function puzzle_04_02(lines) {
-  let card_count = 0;
-  for (let i = 0; i < lines.length; i++) {
-    let { winning_nums, your_nums } = parse_line(lines[i]);
+// part 02
 
-    let match_count = 0;
+function find_copies(line) {
+  let card_num = get_card_num(line);
+  console.log(card_num);
+  let copies = 1;
+
+  for (let i = 0; i < card_num - 1; i++) {
+    let matches = 0;
+    let { winning_nums, your_nums } = parse_line(lines[i]);
     your_nums.forEach((num) => {
-      let index = winning_nums.indexOf(num);
-      if (index >= 0) {
-        match_count++;
-        winning_nums[index] = "_";
+      let k = winning_nums.indexOf(num);
+      if (k >= 0) {
+        matches++;
+        winning_nums[k] = "_";
       }
     });
-    if (match_count >= 1) {
-      let checked_lines = lines.slice(0, i + 1);
-      let new_cards = lines.slice(i + 1, i + match_count + 1);
-      let sorted_cards = [...new_cards, ...new_cards].sort(
-        (a, b) => get_card_num(a) - get_card_num(b)
-      );
-      let rest = lines.slice(i + 1 + match_count, lines.length);
-
-      lines = [...checked_lines, ...sorted_cards, ...rest];
+    if (card_num - get_card_num(lines[i]) >= matches) {
+      copies++;
     }
   }
-  console.log(lines.length);
+  return copies;
 }
 
-puzzle_04_02(lines);
+function get_matches(line) {
+  let { winning_nums, your_nums } = parse_line(line);
+  let matches = 0;
+
+  your_nums.forEach((num) => {
+    let k = winning_nums.indexOf(num);
+    if (k >= 0) {
+      matches++;
+      winning_nums[k] = "_";
+    }
+  });
+
+  return matches;
+}
+
+function can_generate_card(line, card_number) {
+  let can = false;
+
+  const matches = get_matches(line);
+  if (card_number - get_card_num(line) <= matches) {
+    can = true;
+  }
+
+  return can;
+}
+
+function getCopies(card_number, memo) {
+  if (memo[card_number]) {
+    return memo[card_number];
+  }
+  if (card_number > 1) {
+    let card_count = 1;
+    card_count += lines.slice(0, card_number - 1).reduce((acc, line, index) => {
+      if (can_generate_card(line, card_number)) {
+        return acc + getCopies(index + 1, memo);
+      } else {
+        return acc;
+      }
+    }, 0);
+    memo[card_number] = card_count;
+    return card_count;
+  }
+}
+
+function puzzle_04_02() {
+  let total = 0;
+  let memo = { 1: 1 };
+
+  for (let i = 1; i <= lines.length; i++) {
+    total += getCopies(i, memo);
+  }
+  console.log(total);
+}
+
+puzzle_04_02();
+
+// console.log(get_matches("Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1"));
+
+// console.log(
+//   can_generate_card("Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1", 5)
+// );
